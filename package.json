@@ -17,7 +17,8 @@
   "scripts": {
     "grammar": "pegjs src/grammar.peg lib/grammar.js",
     "build": "npm run grammar && babel -d lib/ src",
-    "test": "npm run grammar && mocha --compilers js:babel-register test/"
+    "test": "npm run grammar && mocha --compilers js:babel-register test/",
+    "prepublish": "npm run build"
   },
   "keywords": [
     "css"
