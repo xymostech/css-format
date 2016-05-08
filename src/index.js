@@ -35,8 +35,4 @@ function format(text) {
     return traverse(parsed, 0);
 }
 
-console.log(format(
-    "@media screen, blah { div.blah, #hello { color: \"red\"; -webkit-transition: 3s !important; } }"
-));
-
 module.exports = format;

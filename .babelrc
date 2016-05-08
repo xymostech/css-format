@@ -1,0 +1,7 @@
+{
+  "presets": "es2015",
+  "ignore": [
+    "lib/**/*.js",
+    "node_modules/**/*.js"
+  ]
+}
