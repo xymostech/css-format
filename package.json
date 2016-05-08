@@ -1,0 +1,21 @@
+{
+  "name": "css-format",
+  "version": "1.0.0",
+  "description": "CSS Parser and Formatter",
+  "main": "lib/index.js",
+  "dependencies": {},
+  "devDependencies": {
+    "babel-cli": "^6.8.0",
+    "pegjs": "^0.9.0"
+  },
+  "scripts": {
+    "grammar": "pegjs src/grammar.peg lib/grammar.js",
+    "build": "npm run grammar && babel -d lib/ src",
+    "test": "npm run gramar && echo 'whee'"
+  },
+  "keywords": [
+    "css"
+  ],
+  "author": "xymostech@gmail.com",
+  "license": "MIT"
+}

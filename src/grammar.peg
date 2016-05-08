@@ -1,0 +1,112 @@
+/*
+ * CSS Grammar
+ * ==========================
+ *
+ * Based on https://www.w3.org/TR/CSS2/grammar.html#q25.0 and
+ * https://www.w3.org/TR/css3-mediaqueries/#syntax
+ */
+
+Sheet = S* rules:(Media / Ruleset)* S* { return { type: "stylesheet", rules: rules }; }
+
+Media = "@media" S* selectors:MediaQueryList '{' S* rules:Ruleset* '}' S* {
+        return {
+            type: "media",
+            selectors: selectors,
+            rules: rules,
+        };
+    }
+
+MediaQueryList = S* head:MediaQuery tail:(',' S* MediaQuery)* {
+        return head && [head].concat(tail.map(function(x) { return x[2]; }));
+    }
+
+MediaQuery = modifier:("only" / "not")? S* head:MediaType S* tail:("and" S* MediaExpression)* {
+        return (modifier ? modifier + " " : "") +
+            [head].concat(tail.map(function(x) { return "and " + x[2]; })).join(" ");
+    }
+    / head:MediaExpression tail:("and" S* MediaExpression)* {
+        return [head].concat(tail.map(function(x) { return x[2]; })).join(" ");
+    }
+
+MediaExpression = '(' S* feature:MediaFeature S* value:(':' S* Expr)? ')' S* {
+        return "(" + feature + (value ? ": " + value[2] : "2") + ")";
+    }
+
+MediaType = ident:Ident
+MediaFeature = ident:Ident
+
+Ruleset = selectorHead:Selector S* selectorTail:(',' S* Selector)* S* '{' S* declHead:Declaration? declTail:(';' S* Declaration?)* '}' S* {
+        return {
+            type: "ruleset",
+            selectors: [selectorHead].concat(selectorTail.map(function(x) { return x[2]; })),
+            declarations: (declHead ? [declHead] : []).concat(declTail.filter(function(x) { return x[2]; }).map(function(x) { return x[2]; })),
+        };
+    }
+
+Selector = head:SimpleSelector comb:(S* Combinator S* Selector) {
+        return head + " " + comb[1] + " " + comb[3];
+    }
+         / head:SimpleSelector desc:(S+ Selector) {
+        return head + " " + desc[1];
+    }
+         / SimpleSelector
+SimpleSelector = name:ElementName extras:SelectorExtra* { return name + extras.join(""); }
+               / extras:SelectorExtra+ { return extras.join(""); }
+SelectorExtra = Hash / Class / Attrib / Pseudo
+Combinator = '+' / '>'
+
+ElementName = Ident / '*'
+Hash = '#' name:Name { return '#' + name; }
+Class = '.' ident:Ident { return '.' + ident; }
+Attrib = '???'
+Pseudo = ':' ident:Ident { return ':' + ident; }
+
+Declaration = prop:Property ':' S* val:Expr prio:Prio? {
+        return {
+            type: "declaration",
+            property: prop,
+            value: val,
+            important: !!prio,
+        };
+    }
+Property = Ident
+Prio = "!important" S*
+
+Ident = prefix:'-'? head:NmStart tail:NmChar* { return (prefix ? prefix : "") + head + tail.join(''); }
+
+Expr = head:Term tail:(Operator? Term)* {
+        return [head].concat(tail.map(function(x) { return x[0] + " " + x[1]; })).join("");
+    }
+Operator = '/' S* { return ' /'; } / ',' S* { return ','; }
+
+Term = unary:UnaryOperator? value:(Percentage / Length / Ems / Exs / Angle / Time / Freq / Number) S* {
+        return (unary ? unary : "") + value;
+    }
+     / value:(String / Function / Ident / Uri / Hexcolor) S* { return value; }
+UnaryOperator = '-' / '+'
+
+Number = int:[0-9]* "." frac:[0-9]+ { return int.join("") + "." + frac.join(""); }
+       / int:[0-9]+ { return int.join(""); }
+Percentage = num:Number unit:'%' { return num + unit; }
+Length = num:Number unit:('px' / 'cm' / 'mm' / 'in' / 'pt' / 'pc') { return num + unit; }
+Ems = num:Number unit:'em' { return num + unit; }
+Exs = num:Number unit:'ex' { return num + unit; }
+Angle = num:Number unit:('deg' / 'rad' / 'grad') { return num + unit; }
+Time = num:Number unit:('ms' / 's') { return num + unit; }
+Freq = num:Number unit:('hz' / 'khz') { return num + unit; }
+
+String = '"' inner:([^\n\r\f\\"] / "\\" NL / Escape)* '"' { return '"' + inner.join("") + '"'; }
+       / "'" inner:([^\n\r\f\\'] / "\\" NL / Escape)* "'" { return "'" + inner.join("") + "'"; }
+Uri = "url(" S* inner:String S* ")" { return "url(" + inner + ")"; }
+    / "url(" S* inner:([!#$%&*-~] / NonAscii / Escape)* S* ")" { return "url(" + inner.join("") + ")"; }
+Hexcolor = Hash
+Function = func:Ident "(" S* body:Expr ")" { return func + "(" + body + ")"; }
+
+Name = chars:NmChar+ { return chars.join(""); }
+NmStart = [_a-z] / NonAscii / Escape
+NmChar = [_a-z0-9-] / NonAscii / Escape
+NonAscii = [\u0240-\uffff]
+Escape = '\\' char:[^\r\n\f0-9a-f] { return "\\" + char; }
+
+NL "newline" = "\n" / "\r\n" / "\r" / "\f"
+S "whitespace" = [ \t\r\n\f]+
