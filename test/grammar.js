@@ -32,6 +32,12 @@ describe("grammar", () => {
         parser.parse(body);
     });
 
+    it("parses capital letters", () => {
+        const body = `DiV.BOO { CoLoR: "ReD"; }`;
+
+        parser.parse(body);
+    });
+
     it("parses properties", () => {
         const body = `
         div {
